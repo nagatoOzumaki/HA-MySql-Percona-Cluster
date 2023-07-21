@@ -1,0 +1,312 @@
+apiVersion: ps.percona.com/v1alpha1
+kind: PerconaServerMySQL
+metadata:
+  name: cluster1
+  finalizers:
+    - delete-mysql-pods-in-order
+    # - delete-ssl
+spec:
+  allowUnsafeConfigurations: false
+#  pause: false
+  crVersion: 0.6.0
+  secretsName: cluster1-secrets
+  sslSecretName: cluster1-ssl
+  upgradeOptions:
+    versionServiceEndpoint: https://check.percona.com
+    apply: disabled
+  initImage: perconalab/percona-server-mysql-operator:main
+#  ignoreAnnotations:
+#    - service.beta.kubernetes.io/aws-load-balancer-backend-protocol
+#  ignoreLabels:
+#    - rack
+#  tls:
+#    SANs:
+#      - mysql-1.example.com
+#      - mysql-2.example.com
+#      - mysql-3.example.com
+#    issuerConf:
+#      name: special-selfsigned-issuer
+#      kind: ClusterIssuer
+#      group: cert-manager.io
+
+  mysql:
+    clusterType: group-replication
+    image: perconalab/percona-server-mysql-operator:main-psmysql
+    imagePullPolicy: Always
+#    initImage: percona/percona-server-mysql-operator:0.5.0
+
+    size: 3
+
+    resources:
+      requests:
+        memory: 1G
+      limits:
+        memory: 2G
+
+    affinity:
+      antiAffinityTopologyKey: "none"
+#      advanced:
+#        nodeAffinity:
+#          requiredDuringSchedulingIgnoredDuringExecution:
+#            nodeSelectorTerms:
+#            - matchExpressions:
+#              - key: kubernetes.io/e2e-az-name
+#                operator: In
+#                values:
+#                - e2e-az1
+#                - e2e-az2
+
+#    expose:
+#      enabled: false
+#      type: ClusterIP
+#      annotations:
+#        service.beta.kubernetes.io/aws-load-balancer-backend-protocol: http
+#      externalTrafficPolicy: Cluster
+#      internalTrafficPolicy: Cluster
+#      labels:
+#        rack: rack-22
+#      loadBalancerSourceRanges:
+#        - 10.0.0.0/8
+
+    volumeSpec:
+      persistentVolumeClaim:
+        resources:
+          requests:
+            storage: 2G
+
+#    configuration: |
+#      max_connections=250
+#      innodb_buffer_pool_size={{containerMemoryLimit * 3/4}}
+
+#    sidecars:
+#    - name: noop-memory
+#      image: busybox
+#      command: ["sleep", "30d"]
+#      volumeMounts:
+#      - name: "memory-vol"
+#        mountPath: "/var/log/app/memory"
+#      resources:
+#        requests:
+#          memory: 16M
+#    - name: noop-pvc
+#      image: busybox
+#      command: ["sleep", "30d"]
+#      volumeMounts:
+#      - name: "pvc-vol"
+#        mountPath: "/var/log/app/pvc"
+#    sidecarVolumes:
+#    - name: "memory-vol"
+#      emptyDir:
+#        medium: "Memory"
+#    sidecarPVCs:
+#    - name: pvc-vol
+#      spec:
+#        resources:
+#          requests:
+#            storage: 1G
+
+  proxy:
+    haproxy:
+      enabled: false
+
+      size: 3
+
+      image: perconalab/percona-server-mysql-operator:main-haproxy
+      imagePullPolicy: Always
+
+      resources:
+        requests:
+          memory: 1G
+          cpu: 600m
+#        limits:
+#          memory: 1G
+#          cpu: 700m
+
+      affinity:
+        antiAffinityTopologyKey: "none"
+#        advanced:
+#          nodeAffinity:
+#            requiredDuringSchedulingIgnoredDuringExecution:
+#              nodeSelectorTerms:
+#              - matchExpressions:
+#                - key: kubernetes.io/e2e-az-name
+#                  operator: In
+#                  values:
+#                  - e2e-az1
+#                  - e2e-az2
+
+#      expose:
+#        type: ClusterIP
+#        annotations:
+#          service.beta.kubernetes.io/aws-load-balancer-backend-protocol: http
+#        externalTrafficPolicy: Cluster
+#        internalTrafficPolicy: Cluster
+#        labels:
+#          rack: rack-22
+#        loadBalancerIP: 127.0.0.1
+#        loadBalancerSourceRanges:
+#          - 10.0.0.0/8
+    router:
+      image: perconalab/percona-server-mysql-operator:main-router
+      imagePullPolicy: Always
+#      initImage: percona/percona-server-mysql-operator:0.5.0
+
+      size: 3
+
+      resources:
+        requests:
+          memory: 256M
+        limits:
+          memory: 256M
+
+      affinity:
+        antiAffinityTopologyKey: "none"
+#        advanced:
+#          nodeAffinity:
+#            requiredDuringSchedulingIgnoredDuringExecution:
+#              nodeSelectorTerms:
+#              - matchExpressions:
+#                - key: kubernetes.io/e2e-az-name
+#                  operator: In
+#                  values:
+#                  - e2e-az1
+#                  - e2e-az2
+
+#      configuration: |
+#        [default]
+#        logging_folder=/tmp/router/log
+#        [logger]
+#        level=DEBUG
+
+#      expose:
+#        type: ClusterIP
+#        annotations:
+#          service.beta.kubernetes.io/aws-load-balancer-backend-protocol: http
+#        externalTrafficPolicy: Cluster
+#        internalTrafficPolicy: Cluster
+#        labels:
+#          rack: rack-22
+#        loadBalancerIP: 127.0.0.1
+#        loadBalancerSourceRanges:
+#          - 10.0.0.0/8
+
+  orchestrator:
+    enabled: false
+
+    image: perconalab/percona-server-mysql-operator:main-orchestrator
+    imagePullPolicy: Always
+#    serviceAccountName: percona-server-mysql-operator-orchestrator
+#    initImage: percona/percona-server-mysql-operator:0.5.0
+
+    size: 3
+
+    affinity:
+      antiAffinityTopologyKey: "none"
+#      advanced:
+#        nodeAffinity:
+#          requiredDuringSchedulingIgnoredDuringExecution:
+#            nodeSelectorTerms:
+#            - matchExpressions:
+#              - key: kubernetes.io/e2e-az-name
+#                operator: In
+#                values:
+#                - e2e-az1
+#                - e2e-az2
+
+#    expose:
+#      type: ClusterIP
+#      annotations:
+#        service.beta.kubernetes.io/aws-load-balancer-backend-protocol: http
+#      externalTrafficPolicy: Cluster
+#      internalTrafficPolicy: Cluster
+#      labels:
+#        rack: rack-22
+#      loadBalancerSourceRanges:
+#        - 10.0.0.0/8
+
+    resources:
+      requests:
+        memory: 128M
+      limits:
+        memory: 256M
+
+    volumeSpec:
+      persistentVolumeClaim:
+        resources:
+          requests:
+            storage: 1G
+
+  pmm:
+    enabled: false
+    image: percona/pmm-client:2.36.0
+    imagePullPolicy: Always
+
+    resources:
+      requests:
+        memory: 150M
+        cpu: 300m
+      limits:
+       memory: 256M
+       cpu: 400m
+
+    serverHost: monitoring-service
+    # serverUser: admin
+
+  backup:
+    enabled: true
+    image: perconalab/percona-server-mysql-operator:main-backup
+    imagePullPolicy: Always
+#    initImage: percona/percona-server-mysql-operator:0.5.0
+    storages:
+      us-east-1:
+        type: s3
+        verifyTLS: true
+#        nodeSelector:
+#          storage: tape
+#          backupWorker: 'True'
+#        resources:
+#          requests:
+#            memory: 1G
+#            cpu: 600m
+#        affinity:
+#          nodeAffinity:
+#            requiredDuringSchedulingIgnoredDuringExecution:
+#              nodeSelectorTerms:
+#              - matchExpressions:
+#                - key: backupWorker
+#                  operator: In
+#                  values:
+#                  - 'True'
+#        tolerations:
+#          - key: "backupWorker"
+#            operator: "Equal"
+#            value: "True"
+#            effect: "NoSchedule"
+#        annotations:
+#          testName: scheduled-backup
+#        labels:
+#          backupWorker: 'True'
+#        schedulerName: 'default-scheduler'
+#        priorityClassName: 'high-priority'
+#        containerSecurityContext:
+#          privileged: true
+#        podSecurityContext:
+#          fsGroup: 1001
+#          supplementalGroups: [1001, 1002, 1003]
+        s3:
+          bucket: percona-mysql-backup1
+          credentialsSecret: cluster1-s3-credentials
+          region: us-east-1
+#          prefix: ""
+
+  toolkit:
+    image: perconalab/percona-server-mysql-operator:main-toolkit
+    imagePullPolicy: Always
+#    resources:
+#      requests:
+#        memory: 150M
+#        cpu: 100m
+#      limits:
+#        memory: 256M
+#        cpu: 400m
+

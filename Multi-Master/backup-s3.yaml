@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: my-cluster-name-backup-s3
+type: Opaque
+data:
+  AWS_ACCESS_KEY_ID: QUtJQVNWUlFCNkZGWlJaQUFYTkc=
+  AWS_SECRET_ACCESS_KEY: M1ZGNmJPL1RVMzI2YnhRanlsRlhnN2FSZytWVnp1Vi9EZWt5SmFXbA==
