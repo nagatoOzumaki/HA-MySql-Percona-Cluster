@@ -237,7 +237,7 @@ spec:
             storage: 1G
 
   pmm:
-    enabled: false
+    enabled: true
     image: percona/pmm-client:2.36.0
     imagePullPolicy: Always
 
@@ -250,7 +250,7 @@ spec:
        cpu: 400m
 
     serverHost: monitoring-service
-    # serverUser: admin
+    serverUser: admin
 
   backup:
     enabled: true
